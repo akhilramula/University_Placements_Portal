@@ -1,6 +1,7 @@
 package com.example.demo.mail;
 
-import java.util.Properties;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -9,66 +10,59 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.util.Properties;
 
+@Component
 public class SendMail {
-	
-	public void sendMail(String to, String subject, String msgContent) {
 
-		// Sender's email ID needs to be mentioned
-		String from = "akhilramula38@gmail.com";
+    @Value("${mail.username}")
+    private String from; // Injects the email
 
-		// Assuming you are sending email from through gmails smtp
-		String host = "smtp.gmail.com";
+    @Value("${mail.password}")
+    private String password; // Injects the password
 
-		// Get system properties
-		Properties properties = System.getProperties();
+    public void sendMail(String to, String subject, String msgContent) {
 
-		// Setup mail server
-		properties.put("mail.smtp.host", host);
+        if (to == null || to.trim().isEmpty()) {
+            System.out.println("Error: Recipient email is null or empty. Aborting sendMail.");
+            return;
+        }
+        
+        //Debug Logs
+        System.out.println("FROM EMAIL: " + from);
+        System.out.println("TO EMAIL: " + to);
 
-		properties.put("mail.smtp.socketFactory.port", "465");
-		properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-		properties.put("mail.smtp.auth", "true");
-		properties.put("mail.smtp.port", "465");
 
-		// Get the Session object and pass username and password
-		Session session = Session.getInstance(properties, new javax.mail.Authenticator() {
+        String host = "smtp.gmail.com";
 
-			protected PasswordAuthentication getPasswordAuthentication() {
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", host);
+        properties.put("mail.smtp.socketFactory.port", "465");
+        properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.port", "465");
 
-				return new PasswordAuthentication("akhilramula38@gmail.com", "tacz soix qxlb iwda");
+        Session session = Session.getInstance(properties, new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(from, password);
+            }
+        });
 
-			}
+        session.setDebug(true);
 
-		});
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(from));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+            message.setSubject(subject);
+            message.setContent(msgContent, "text/html");
 
-		// Used to debug SMTP issues
-		session.setDebug(true);
-
-		try {
-			// Create a default MimeMessage object.
-			MimeMessage message = new MimeMessage(session);
-
-			// Set From: header field of the header.
-			message.setFrom(new InternetAddress(from));
-
-			// Set To: header field of the header.
-			message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-
-			// Set Subject: header field
-			message.setSubject(subject);
-			
-			//set the content
-			 message.setContent(msgContent, "text/html");
-
-			System.out.println("sending...");
-			// Send message
-			Transport.send(message);
-			System.out.println("Sent message successfully....");
-		} catch (MessagingException mex) {
-			mex.printStackTrace();
-		}
-
-	}
+            System.out.println("sending...");
+            Transport.send(message);
+            System.out.println("Sent message successfully....");
+        } catch (MessagingException mex) {
+            mex.printStackTrace();
+        }
+    }
 
 }

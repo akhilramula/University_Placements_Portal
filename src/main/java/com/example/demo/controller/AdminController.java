@@ -30,6 +30,9 @@ public class AdminController {
 	@Autowired
 	private StudentDao sdao;
 
+	@Autowired
+	private SendMail mail;
+
 	// controller methods
 	@GetMapping("/index")
 	public String index() {
@@ -118,7 +121,7 @@ public class AdminController {
 				+ "        <p>Please make sure to keep this information secure and do not share it with anyone.</p>"
 				+ "        <br>" + "        <p>Thank you,</p>"
 				+ "        <p><strong>University Placements Team</strong></p>" + "    </body>" + "</html>";
-		SendMail mail = new SendMail();
+
 		mail.sendMail(student.getEmail(), subject, msgContent);
 
 		// Check if the registration was successful
@@ -195,15 +198,13 @@ public class AdminController {
 		}
 
 	}
-	
+
 	// admin searching for students (Searc Bar Feature)
 	@GetMapping("/searchStudent")
-    public String searchStudent(@RequestParam(name = "search", required = false) String search, Model model) {
-        List<Student> students = dao.searchStudents(search);
-        model.addAttribute("students", students);
-        return "admin/view_students"; // Redirects to studentList.jsp
-    }
-	
-	
+	public String searchStudent(@RequestParam(name = "search", required = false) String search, Model model) {
+		List<Student> students = dao.searchStudents(search);
+		model.addAttribute("students", students);
+		return "admin/view_students"; // Redirects to studentList.jsp
+	}
 
 }

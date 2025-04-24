@@ -34,6 +34,9 @@ public class ApplicationsController {
 
 	@Autowired
 	private StudentDao sdao;
+	
+	@Autowired
+	private SendMail mail;
 
 	// admin view applications of ALL students
 	@GetMapping("/showApplications")
@@ -83,27 +86,41 @@ public class ApplicationsController {
 		}
 	}
 
-	// Admin approving application
 	@GetMapping("/approveApplication")
 	public String approveApplication(@RequestParam("id") int application_id,
-			@RequestParam("student_id") String student_id, Applications applications) {
-		applications.setApplication_status("Application approved");
-		int status = appdao.updateApplicationStatus(application_id, applications);
-		if (status > 0) {
-			Student student = sdao.getStudentById(student_id);
-			String subject = "Congratulations! Your Application Has Been Approved";
-			String msgContent = "<p>Dear " + student.getFullname() + ",</p>"
-					+ "<p>We are pleased to inform you that your application with Application  ID:" + application_id
-					+ " has been successfully approved. Congratulations on this achievement!</p>"
-					+ "<p><strong>Next Steps:</strong><br></p>"
-					+ "<p>If you have any questions or need further assistance, feel free to reach out to us any time.</p>"
-					+ "<p>Once again, congratulations, and we look forward to welcoming you!</p>"
-					+ "<p>Best regards,<br>University Placements Team</p>";
-			SendMail mail = new SendMail();
-			mail.sendMail(student.getEmail(), subject, msgContent);
-			return "redirect:/showApplications?status=" + status;
-		}
-		return "redirect:/showApplications?status=" + status;
+	        @RequestParam("student_id") String student_id, Applications applications) {
+	    
+	    applications.setApplication_status("Application approved");
+	    int status = appdao.updateApplicationStatus(application_id, applications);
+
+	    if (status > 0) {
+	        Student student = sdao.getStudentById(student_id);
+	        
+	        // Debugging log to check if the email is valid
+	        System.out.println("Student Email: " + student.getEmail());
+	        
+	        // If the email is null or empty, throw an exception or handle it
+	        if (student.getEmail() == null || student.getEmail().isEmpty()) {
+	            System.out.println("Error: Student email is null or empty!");
+	            return "redirect:/showApplications?status=" + status;  // or show an error page
+	        }
+	        
+	        String subject = "Congratulations! Your Application Has Been Approved";
+	        String msgContent = "<p>Dear " + student.getFullname() + ",</p>"
+	                + "<p>We are pleased to inform you that your application with Application  ID:" + application_id
+	                + " has been successfully approved. Congratulations on this achievement!</p>"
+	                + "<p><strong>Next Steps:</strong><br></p>"
+	                + "<p>If you have any questions or need further assistance, feel free to reach out to us any time.</p>"
+	                + "<p>Once again, congratulations, and we look forward to welcoming you!</p>"
+	                + "<p>Best regards,<br>University Placements Team</p>";
+	        
+	        
+	        mail.sendMail(student.getEmail(), subject, msgContent);  // Sending the email
+	        
+	        return "redirect:/showApplications?status=" + status;
+	    }
+	    
+	    return "redirect:/showApplications?status=" + status;
 	}
 
 	// Admin rejecting application
@@ -124,7 +141,7 @@ public class ApplicationsController {
 					+ "<p>We appreciate your interest and wish you the best in your future endeavors.</p>"
 					+ "<p>Best regards,<br>University Placements Team</p>";
 
-			SendMail mail = new SendMail();
+			
 			mail.sendMail(student.getEmail(), subject, msgContent);
 			return "redirect:/showApplications?status=" + status;
 		}
